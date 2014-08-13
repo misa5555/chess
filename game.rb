@@ -14,7 +14,16 @@ class Game
         moving_player.play_turn
       rescue InvalidInputError => e
         puts e.message
-        puts 'Be sure to use this format: 1,2' 
+        puts 'Be sure to use this format: 1,2'
+        retry
+      rescue InvalidMoveError => e
+        puts e.message
+        retry
+      rescue MoveIntoCheckError => e
+        puts e.message
+        retry
+      rescue NoPieceAtThisLocationError => e
+        puts e.message
         retry
       end    
       moving_player = toggle_player(moving_player)

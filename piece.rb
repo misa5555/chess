@@ -39,6 +39,4 @@ class Piece
     return true if pos.all? { |idx| idx.between?(0, 7) }
     false
   end
-  
-
 end

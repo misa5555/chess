@@ -12,8 +12,8 @@ class Board
   end
   
   def initialize(default_board = true)
-    @grids = Array.new(LENGTH){ Array.new(LENGTH, nil)}
-    generate_initial_board if default_board == true
+    @grids = Array.new(LENGTH){ Array.new(LENGTH, nil) }
+    generate_initial_board if default_board
   end  
   
   def set_piece(piece, pos, color)
@@ -25,11 +25,24 @@ class Board
   def [](pos)
     x, y = pos
     @grids[x][y]
-  end  
+  end
+  
+  def []=(pos, piece)
+    x, y = pos
+    @grids[x][y] = piece
+  end    
   
   def render
-    puts "   a b c d e f g h"
-    puts "-"*"   a b c d e f g h".length
+    base = "   a b c d e f g h"
+    puts base
+    puts "-" * base.length
+     #
+    # puts @grids.map do |row|
+    #   row.map do |piece|
+    #     piece.draw unless piece.nil?
+    #     " "
+    #   end.join(" ")
+    # end.join("\n")
     @grids.each_with_index do |row, i|
       next_line = (8-i).to_s+"| "
       row.each do |piece|
@@ -46,36 +59,28 @@ class Board
   
   # returns boolean
   def in_check?(color)
-    king_pos = [0, 0]
-    @grids.each_with_index do |row, i|
-      row.each_with_index do |piece, j|
-       king_pos = [i, j] if piece.is_a?(King) && piece.color == color
-     end
+    king = find_king(color)
+    king_pos = king.position
+    find_color_pieces(opposite_color(color)).each do |piece|
+      return true if piece.moves.include?(king_pos)
     end
-    @grids.each_with_index do |row, i|
-      row.each_with_index do |piece, j|
-        if !piece.nil? && piece.color!=color
-          found_enemy_piece = piece 
-          return true if found_enemy_piece.moves.include?(king_pos)  
-        end
-      end 
-    end  
     return false
   end
   
   def move(start, end_pos)
-    raise "No piece at this position" if self[start].nil?
-    raise "Moving into check" unless self[start].valid_moves.include?(end_pos)
+    raise NoPieceAtThisLocationError.new("No piece at #{ start.to_s }") if self[start].nil?
+    raise InvalidMoveError.new("Invalid move") unless self[start].moves.include?(end_pos)
+    raise MoveIntoCheckError.new("Moving into check") unless self[start].valid_moves.include?(end_pos)
     self.move!(start, end_pos)
   end
   
   def move!(start, end_pos)
-    raise "No piece at this position" if self[start].nil?
+    raise NoPieceAtThisLocationError.new("No piece at #{ start.to_s }") if self[start].nil?
     piece_to_move = self[start]
     if piece_to_move.moves.include?(end_pos)
       piece_to_move.move(end_pos)
-      @grids[start[0]][start[1]] = nil
-      @grids[end_pos[0]][end_pos[1]] = piece_to_move
+      self[start] = nil
+      self[end_pos] = piece_to_move
     else
       raise "Cannot move piece there"
     end
@@ -83,24 +88,25 @@ class Board
   
   def dup
     copy_board = Board.new(false)
-    @grids.each_with_index do |row, i|
-      row.each_with_index do |piece, j|
-        unless piece.nil?
-          copy_board.grids[i][j] = piece.dup(copy_board)
-        end
-      end
+    
+    @grids.flatten.compact.each do |piece|
+      copy_board[piece.position] = piece.dup(copy_board)
     end
+    
+    # @grids.each_with_index do |row, i|
+    #   row.each_with_index do |piece, j|
+    #     unless piece.nil?
+    #       copy_board.grids[i][j] = piece.dup(copy_board)
+    #     end
+    #   end
+    # end
     copy_board
   end
   
   def checkmate?(color)
     return false unless in_check?(color)
-    @grids.each do |row|
-      row.each do |piece|
-        unless piece.nil?
-          return false if piece.color == color && !piece.valid_moves.empty?
-        end
-      end
+    find_color_pieces(color).each do |piece|
+      return false if !piece.valid_moves.empty?
     end
     true
   end
@@ -109,8 +115,9 @@ private
   def generate_initial_board
     piece_order = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
     piece_order.each_with_index do |piece, y|
-      @grids[0][y] = piece.new(:black, [0, y], self)
-      @grids[7][y] = piece.new(:white, [7, y], self)
+      # @grids[0][y] = piece.new(:black, [0, y], self)
+      self[[0, y]] = piece.new(:black, [0, y], self)
+      self[[7, y]] = piece.new(:white, [7, y], self)
     end
     
     #pawn
@@ -118,5 +125,17 @@ private
       @grids[1][i] = Pawn.new(:black, [1, i], self)
       @grids[6][i] = Pawn.new(:white, [6, i], self)
     end  
-  end  
+  end
+  
+  def find_king(color)
+    find_color_pieces(color).find { |piece| piece.is_a?(King) }
+  end
+  
+  def find_color_pieces(color)
+    @grids.flatten.compact.select { |piece| piece.color == color }
+  end
+  
+  def opposite_color(color)
+    color == :white ? :black : :white
+  end
 end

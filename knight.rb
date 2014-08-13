@@ -9,7 +9,7 @@ class Knight < SteppingPiece
     [2, 1], 
     [2, -1], 
     [-2, 1], 
-    [-2, -2]]
+    [-2, -1]]
   end
   
   def draw
