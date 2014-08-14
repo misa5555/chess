@@ -10,4 +10,11 @@ end
 class MoveIntoCheckError < StandardError
 end
 
-# class 
+class NoRookForCastlingError < StandardError
+end
+
+class CanNotCastlingError < StandardError
+end
+
+class WrongColorPieceError < StandardError
+end

@@ -23,14 +23,6 @@ class Piece
     end
   end
   
-  def move_into_check?(pos)
-    #duplicate board to perform move
-    #look to see in player is in check
-    dup_board = @board.dup
-    dup_board.move!(@position, pos)
-    dup_board.in_check?(@color)
-  end
-  
   def dup(new_board)
     self.class.new(@color, @position, new_board)
   end
@@ -38,5 +30,14 @@ class Piece
   def within_boundary(pos)
     return true if pos.all? { |idx| idx.between?(0, 7) }
     false
+  end
+  
+  private
+  def move_into_check?(pos)
+    #duplicate board to perform move
+    #look to see in player is in check
+    dup_board = @board.dup
+    dup_board.move!(@position, pos)
+    dup_board.in_check?(@color)
   end
 end

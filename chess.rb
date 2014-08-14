@@ -13,11 +13,12 @@ require './board'
 require './game'
 require './human_player'
 require './errors'
+require 'colorize'
 
 if __FILE__ == $PROGRAM_NAME
  b = Board.new
- p1 = HumanPlayer.new(b, "A")
- p2 = HumanPlayer.new(b, "B")
+ p1 = HumanPlayer.new(b, "White", :white)
+ p2 = HumanPlayer.new(b, "Black", :black)
  g = Game.new(p1, p2, b)
  g.run
 end
